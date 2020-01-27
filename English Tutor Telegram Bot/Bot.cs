@@ -23,6 +23,8 @@ namespace English_Tutor_Telegram_Bot
             Users = new List<User>();
         }
 
+        public Bot() { }
+
         /// <summary>
         /// Токен
         /// </summary>
@@ -36,7 +38,7 @@ namespace English_Tutor_Telegram_Bot
         /// <summary>
         /// Пользователи, которые когда-либо обращались к боту
         /// </summary>
-        private List<User> Users { get; set; }
+        public List<User> Users { get; set; }
 
         /// <summary>
         /// Приветствие нового пользователя
@@ -59,6 +61,7 @@ namespace English_Tutor_Telegram_Bot
         /// </summary>
         public void Start()
         {
+            Data.Load();
             TelBot = new TelegramBotClient(Token);
             TelBot.OnMessage += MessageListener;
             TelBot.StartReceiving();
@@ -104,12 +107,13 @@ namespace English_Tutor_Telegram_Bot
                     Sender.SendTextMessage(id, Options);
                 }
             }
-            else if (text.ToString() == "present simple")
+            else if (text.ToString().ToLower() == "/Present_simple".ToLower())
             {
                 string picture = @"https://sun9-3.userapi.com/c857732/v857732380/15816b/t5tiWjLpCXA.jpg";
                 Sender.SendPhoto(id, picture);
             }
-            
+
+            Data.Save();
         }
     }
 }

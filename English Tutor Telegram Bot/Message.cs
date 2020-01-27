@@ -9,7 +9,7 @@ namespace English_Tutor_Telegram_Bot
     /// <summary>
     /// Сообщение
     /// </summary>
-    class Message
+    public class Message
     {
         /// <summary>
         /// Новое сообщение
@@ -19,10 +19,18 @@ namespace English_Tutor_Telegram_Bot
         /// <param name="ChatId">Id</param>
         public Message(string Text, string MessageType, long ChatId)
         {
+            Date = DateTime.Now.ToString();
             this.Text = Text;
             this.MessageType = MessageType;
             this.ChatId = ChatId;
         }
+
+        public Message() { }
+
+        /// <summary>
+        /// Дата и время отправки сообщения
+        /// </summary>
+        public string Date { get; set; }
 
         /// <summary>
         /// Текст сообщения
@@ -38,5 +46,6 @@ namespace English_Tutor_Telegram_Bot
         /// Id
         /// </summary>
         public long ChatId { get; set; }
+
     }
 }

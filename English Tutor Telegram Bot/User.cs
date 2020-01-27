@@ -9,7 +9,7 @@ namespace English_Tutor_Telegram_Bot
     /// <summary>
     /// Пользователь
     /// </summary>
-    class User
+    public class User
     {
         /// <summary>
         /// Создание пользователя
@@ -23,6 +23,8 @@ namespace English_Tutor_Telegram_Bot
             this.ChatId = ChatId;
             Messages = new List<Message>();
         }
+
+        public User() { }
 
         public string Name { get; set; }
 
