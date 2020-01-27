@@ -50,7 +50,7 @@ namespace English_Tutor_Telegram_Bot
         /// </summary>
         private string Options = "* Укажите название времени, чтобы получить разъяснения с примерами." +
                                  $"{Environment.NewLine}Для примера: /Present_Simple." +
-                                 $"{Environment.NewLine}* /word - Получить рандомное английское слово" +
+                                 $"{Environment.NewLine}* /word - Получить рандомное английское слово<" +
                                  $"{Environment.NewLine}* /idiom - Получить рандомную английскую идиому" +
                                  $"{Environment.NewLine}* /help - Вывести это сообщение ещё раз";
 
@@ -71,27 +71,30 @@ namespace English_Tutor_Telegram_Bot
         /// <param name="e"></param>
         private void MessageListener(object sender, MessageEventArgs e)
         {
+            bool newUser = false;
+
+            string FirstName = e.Message.Chat.FirstName;
+            string text = e.Message.Text;
+            long id = e.Message.Chat.Id;
+            string messageType = e.Message.Type.ToString();
+
             //Проверка на нового пользователя
-            var selectedUser = from user in Users where user.ChatId == e.Message.Chat.Id select user;
+            var selectedUser = from user in Users where user.ChatId == id select user;
             User tempUser = selectedUser.FirstOrDefault();
 
-            if (tempUser == null) Users.Add
-                                                      (
-                 new User(e.Message.Chat.FirstName, e.Message.Chat.Id,
-                 new Message(e.Message.Text, e.Message.Type.ToString(), e.Message.Chat.Id))
-                                                      );
+            if (tempUser == null)
+            {
+                Users.Add (new User(FirstName, id));
+                tempUser = Users.Last();
+                newUser = true;
+            }
 
-            selectedUser = from user in Users where user.ChatId == e.Message.Chat.Id select user;
-            User currentUser = selectedUser.FirstOrDefault();
-            currentUser.LastMessage.Text = e.Message.Text;
-
-            string text = currentUser.LastMessage.Text;
-            long id = currentUser.ChatId;
-            string messageType = currentUser.LastMessage.MessageType;
+            User currentUser = tempUser;
+            currentUser.Messages.Add(new Message(text, messageType, id));
 
             if (text == "/start")
             {
-                if (tempUser == null)
+                if (newUser)
                 {
                     Sender.SendTextMessage(id, Greeting);
                     Sender.SendTextMessage(id, Options);

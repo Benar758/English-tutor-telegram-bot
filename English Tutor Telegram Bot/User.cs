@@ -17,17 +17,17 @@ namespace English_Tutor_Telegram_Bot
         /// <param name="Name">Имя</param>
         /// <param name="ChatId">Id</param>
         /// <param name="LastMesssage">Сообщение</param>
-        public User(string Name, long ChatId, Message LastMesssage)
+        public User(string Name, long ChatId)
         {
             this.Name = Name;
             this.ChatId = ChatId;
-            this.LastMessage = LastMesssage;
+            Messages = new List<Message>();
         }
 
         public string Name { get; set; }
 
         public long ChatId { get; set; }
 
-        public Message LastMessage { get; set; }
+        public List<Message> Messages { get; set; }
     }
 }
