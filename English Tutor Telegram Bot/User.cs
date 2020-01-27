@@ -6,8 +6,17 @@ using System.Threading.Tasks;
 
 namespace English_Tutor_Telegram_Bot
 {
+    /// <summary>
+    /// Пользователь
+    /// </summary>
     class User
     {
+        /// <summary>
+        /// Создание пользователя
+        /// </summary>
+        /// <param name="Name">Имя</param>
+        /// <param name="ChatId">Id</param>
+        /// <param name="LastMesssage">Сообщение</param>
         public User(string Name, long ChatId, Message LastMesssage)
         {
             this.Name = Name;
