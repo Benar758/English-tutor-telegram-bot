@@ -10,17 +10,50 @@ namespace English_Tutor_Telegram_Bot
 {
     class Data
     {
+        private readonly static string DataPath = @"Data.json";
+        private readonly static string WordsDataPath = @"WordsData.txt";
+
         public static void Save()
         {
             string json = JsonConvert.SerializeObject(Program.Bot.Users);
-            File.WriteAllText("data.json", json);
+            File.WriteAllText(DataPath, json);
         }
 
         public static void Load()
         {
-            if (!File.Exists("data.json")) File.Create("data.json").Dispose();
-            string json = File.ReadAllText("data.json");
+            #region Загрузка данных о пользователях
+
+            if (!File.Exists(DataPath)) File.Create(DataPath).Dispose();
+            string json = File.ReadAllText(DataPath);
             if (!string.IsNullOrEmpty(json)) Program.Bot.Users = JsonConvert.DeserializeObject<List<User>>(json);
+
+            #endregion
+
+            #region Загрузка иностранных слов для отправки пользователям
+
+            if (File.Exists(WordsDataPath))
+            {
+                string[] wordsLines = File.ReadAllLines(WordsDataPath);
+
+                Dictionary<string, string> words = new Dictionary<string, string>();
+
+                for (int i = 0; i < wordsLines.Length; i++)
+                {
+                    string[] tempLine = wordsLines[i].Split('\t');
+                    try
+                    {
+                        words.Add(tempLine[0], tempLine[2]);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                }
+
+                Dictionary.Words = words;
+            }
+
+            #endregion
         }
     }
 }
