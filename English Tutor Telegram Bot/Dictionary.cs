@@ -6,8 +6,14 @@ using System.Threading.Tasks;
 
 namespace English_Tutor_Telegram_Bot
 {
-    class Dictionary
+    /// <summary>
+    /// Класс для работы с базой иностранных слов для рандомной отправки пользователю по запросу
+    /// </summary>
+    static class Dictionary
     {
+        /// <summary>
+        /// Набор иностранных слов с их переводом 
+        /// </summary>
         public static Dictionary<string, string> Words { get; set; }
     }
 }

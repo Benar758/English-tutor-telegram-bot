@@ -8,17 +8,26 @@ using System.Threading.Tasks;
 
 namespace English_Tutor_Telegram_Bot
 {
+    /// <summary>
+    /// Класс для работы с данными
+    /// </summary>
     class Data
     {
         private readonly static string DataPath = @"Data.json";
         private readonly static string WordsDataPath = @"WordsData.txt";
 
+        /// <summary>
+        /// Сохранение данных
+        /// </summary>
         public static void Save()
         {
             string json = JsonConvert.SerializeObject(Program.Bot.Users);
             File.WriteAllText(DataPath, json);
         }
 
+        /// <summary>
+        /// Загрузка данных
+        /// </summary>
         public static void Load()
         {
             #region Загрузка данных о пользователях

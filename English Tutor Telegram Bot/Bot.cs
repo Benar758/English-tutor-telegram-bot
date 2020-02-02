@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace English_Tutor_Telegram_Bot
 {
@@ -38,6 +39,11 @@ namespace English_Tutor_Telegram_Bot
         public static TelegramBotClient TelBot { get; set; }
 
         /// <summary>
+        /// Клваиатура функций
+        /// </summary>
+        public static ReplyKeyboardMarkup rkm { get; set; }
+
+        /// <summary>
         /// Пользователи, которые когда-либо обращались к боту
         /// </summary>
         public List<User> Users { get; set; }
@@ -52,16 +58,19 @@ namespace English_Tutor_Telegram_Bot
         /// <summary>
         /// Функции бота
         /// </summary>
-        private readonly string Options = "* Укажите название времени, чтобы получить разъяснения с примерами." +
+        public static readonly string Options = "* Укажите название времени, чтобы получить разъяснения с примерами." +
                                  $"{Environment.NewLine}Для примера: /Present_Simple." +
                                  $"{Environment.NewLine}* /word - Получить рандомное английское слово" +
-                                 $"{Environment.NewLine}* /idiom - Получить рандомную английскую идиому" +
+                                 $"{Environment.NewLine}* $add+word+слово - Добавить новое слово к себе в словарь. Знаки '$' и '-' обязательны." +
+                                 $"{Environment.NewLine}* /show_my_words - Показать все сохранённые слова" +
+                                 $"{Environment.NewLine}* /check_my_words - Тренировка слов" +
                                  $"{Environment.NewLine}* /help - Вывести это сообщение ещё раз";
 
         private readonly Dictionary<string, string> RulesPictures = new Dictionary<string, string> 
         {
             {"/Present_Simple".ToLower(), @"https://sun9-3.userapi.com/c857732/v857732380/15816b/t5tiWjLpCXA.jpg"},
-            {"/Present_Continuous".ToLower(), @"https://sun9-71.userapi.com/c205616/v205616954/4e593/KtwSA_9bWkY.jpg"}
+            {"/Present_Continuous".ToLower(), @"https://sun9-71.userapi.com/c205616/v205616954/4e593/KtwSA_9bWkY.jpg"},
+            {"/Future_Simple".ToLower(), @"https://sun9-8.userapi.com/c857324/v857324690/cc0fb/_9XK9wdZ3fU.jpg"}
         };
 
         /// <summary>
@@ -71,6 +80,14 @@ namespace English_Tutor_Telegram_Bot
         {
             Data.Load();
             TelBot = new TelegramBotClient(Token);
+
+            foreach(User user in Users)
+            {
+                user.Training = new Training(user, Training.AmountOfQuestions);
+                user.LearningMode = false;
+            }
+
+            SetUpKeyboard();
             TelBot.OnMessage += MessageListener;
             TelBot.StartReceiving();
         }
@@ -103,6 +120,8 @@ namespace English_Tutor_Telegram_Bot
             User currentUser = tempUser;
             currentUser.Messages.Add(new Message(text, messageType, id));
 
+            if (currentUser.Training == null) currentUser.Training = new Training(currentUser, Training.AmountOfQuestions);
+
             if (messageType == "Text")
             {
                 if (text.ToLower() == "/start")
@@ -110,11 +129,11 @@ namespace English_Tutor_Telegram_Bot
                     if (newUser)
                     {
                         Sender.SendTextMessage(id, Greeting);
-                        Sender.SendTextMessage(id, Options);
+                        Sender.SendOptionsKeyboard(id);
                     }
                     else
                     {
-                        Sender.SendTextMessage(id, Options);
+                        Sender.SendOptionsKeyboard(id);
                     }
                 }
                 else if (text.ToLower() == "привет" || text.ToLower() == "hello") Sender.SendTextMessage(id, "Hello!");
@@ -132,12 +151,83 @@ namespace English_Tutor_Telegram_Bot
                     string word = words[r.Next(words.Count - 1)];
 
                     Sender.SendTextMessage(id, word);
-                    Thread.Sleep(1000);
                     Sender.SendTextMessage(id, Dictionary.Words[word]);
+
+                    Sender.SendTextMessage(id, "Вы можете сохранить данное слово в вашем словаре," +
+                                               " используя команду добавления слова: ");
+
+                    Sender.SendTextMessage(id, "$add+word+слово");
+                }
+                else if (text.ToLower().StartsWith("$"))
+                {
+                    string[] test = text.ToLower().Split('+');
+
+                    if (test.Length == 3)
+                    {
+                        if (test[0] == "$add")
+                        {
+                            Word.Add(id, new Word(test[1], test[2]));
+                            Sender.SendTextMessage(id, "Успешно");
+                        }
+                    }
+                }
+                else if (text.ToLower() == "/show_my_words")
+                {
+                    if (currentUser.Words.Count >= 1)
+                    {
+                        int counter = 1;
+
+                        StringBuilder sb = new StringBuilder();
+                        foreach (Word word in currentUser.Words)
+                        {
+                            sb.Append($"{counter++}. {word._Word} - {word.Translation} [{word.LearningProgress}]\n");
+                        }
+
+                        Sender.SendTextMessage(id, sb.ToString());
+                    }
+                    else
+                    {
+                        Sender.SendTextMessage(id, "У вас нет слов!");
+                    }
+                }
+                else if (text.ToLower() == "/check_my_words")
+                {
+                    if (currentUser.Words.Count >= 5) currentUser.Training.CheckWords();
+                    else Sender.SendTextMessage(id, $"Для тренировки слов необходимо минимум 5 слов в словаре");
+                }
+                else if (currentUser.LearningMode)
+                {
+                    if (text.ToLower() == currentUser.Training.CorrectAnswer)
+                    {
+                        Sender.SendTextMessage(id, "Correct!");
+                        Thread.Sleep(100);
+                        currentUser.Words[currentUser.Words.IndexOf(currentUser.Training.WordObject)].LearningProgress++;
+                        currentUser.Training.Words.RemoveAt(currentUser.Training.WordIndex);
+                        currentUser.Training.Counter--;
+                        if (currentUser.Training.Counter == 0)
+                        {
+                            currentUser.LearningMode = false;
+                            currentUser.Training = new Training(currentUser, Training.AmountOfQuestions);
+                        }
+                        else currentUser.Training.CheckWords();
+                    }
+                    else
+                    {
+                        try
+                        {
+                            Sender.SendTextMessage(id, "Wrong!");
+                            currentUser.Words[currentUser.Words.IndexOf(currentUser.Training.WordObject)].LearningProgress -= 2;
+                            currentUser.Training.CheckWords();
+                        }
+                        catch
+                        {
+
+                        }
+                    }
                 }
                 else if (text.ToLower() == "/help")
                 {
-                    Sender.SendTextMessage(id, Options);
+                    Sender.SendOptionsKeyboard(id);
                 }
                 else
                 {
@@ -154,18 +244,53 @@ namespace English_Tutor_Telegram_Bot
                 }        
             }
 
-            if(messageType == "Photo")
+            if (messageType == "Photo")
             {
-                Sender.SendTextMessage(id, "Зачем мне эта фотка? Ну ладно...");                    
+                Sender.SendTextMessage(id, "I don't need it. Take it back");
+                var photo = e.Message.Photo.FirstOrDefault();
+
+                Sender.SendPhoto(id, photo.FileId);
             }
 
             if (id != 735342354)
             {
-                Sender.SendTextMessage(735342354, "Хозяин, мне кто-то написал!");
-                Sender.SendTextMessage(735342354, $"{FirstName}: {text}");
+                if (currentUser.Messages.Count == 1)
+                {
+                    Sender.SendTextMessage(735342354, "Someone new has texted me!");
+                }
             }
 
             Data.Save();
+        }
+
+        /// <summary>
+        /// Описание клавиатуры
+        /// </summary>
+        private void SetUpKeyboard()
+        {
+            rkm = new ReplyKeyboardMarkup();
+
+            rkm.Keyboard =
+                       new KeyboardButton[][]
+                       {
+                        new KeyboardButton[]
+                        {
+                            new KeyboardButton("/word"),
+                            new KeyboardButton("/show_my_words"),
+                            new KeyboardButton("/check_my_words")
+                        },
+                        new KeyboardButton[]
+                        {
+                            new KeyboardButton("/Present_Simple"),
+                            new KeyboardButton("/Present_Continuous"),
+                            new KeyboardButton("/Future_Simple")
+                        },
+                        new KeyboardButton[]
+                        {
+                            new KeyboardButton("/help"),
+                            new KeyboardButton("/thanks")
+                        }
+                       };
         }
     }
 }

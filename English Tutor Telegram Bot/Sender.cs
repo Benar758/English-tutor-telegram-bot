@@ -9,7 +9,7 @@ namespace English_Tutor_Telegram_Bot
     /// <summary>
     /// Отправщик сообщений
     /// </summary>
-    class Sender
+    static class Sender
     {
         /// <summary>
         /// Отправляет текстовое сообщение
@@ -18,7 +18,16 @@ namespace English_Tutor_Telegram_Bot
         /// <param name="Text">Текст сообщения</param>
         public async static void SendTextMessage(long chatId, string Text)
         {
-            await Bot.TelBot.SendTextMessageAsync(chatId, Text);
+           if(!string.IsNullOrEmpty(Text)) await Bot.TelBot.SendTextMessageAsync(chatId, Text);
+        }
+
+        /// <summary>
+        /// Отправляет инструкцию и устанавливает клавиатуру для управления ботом
+        /// </summary>
+        /// <param name="chatId">id</param>
+        public async static void SendOptionsKeyboard(long chatId)
+        {
+            await Bot.TelBot.SendTextMessageAsync(chatId, Bot.Options, Telegram.Bot.Types.Enums.ParseMode.Default, false, false, 0, Bot.rkm);
         }
 
         /// <summary>
