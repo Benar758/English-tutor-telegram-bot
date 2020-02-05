@@ -12,7 +12,7 @@ namespace English_Tutor_Telegram_Bot
 
         static void Main(string[] args)
         {
-            Bot = new Bot("953625679:AAEL-6Rbg3VG3R6d-k9fZWP68Iq8s4wKzpA");
+            Bot = new Bot("###");
             Bot.Start();
             Console.ReadLine();
         }
